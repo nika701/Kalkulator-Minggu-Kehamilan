@@ -3,102 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <title>Kalkulator Minggu Kehamilan</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 16px;
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
     }
-
-    .card {
-      max-width: 480px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 20px 18px 22px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      text-align: center;
-    }
-
-    .header-image,
-    .footer-image {
-      width: 140px;
-      margin: 0 auto 12px auto;
-      display: block;
-    }
-
     h1 {
-      font-size: 20px;
-      margin: 0 0 4px;
+      font-size: 22px;
       text-align: center;
+      margin-bottom: 20px;
     }
-
-    .subtitle {
-      font-size: 13px;
-      color: #666;
-      text-align: center;
-      margin-bottom: 18px;
-    }
-
     label {
       display: block;
-      font-size: 14px;
-      margin-bottom: 6px;
-      font-weight: 600;
-      text-align: left;
+      margin-top: 12px;
+      font-weight: bold;
     }
-
-    input[type="date"] {
+    input[type="date"],
+    input[type="number"] {
       width: 100%;
-      padding: 8px 10px;
-      font-size: 14px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+      padding: 8px;
+      margin-top: 4px;
       box-sizing: border-box;
     }
-
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+    .row > div {
+      flex: 1;
+    }
     button {
-      width: 100%;
-      padding: 10px 12px;
-      margin-top: 14px;
-      font-size: 15px;
-      font-weight: 600;
-      border-radius: 999px;
+      margin-top: 16px;
+      padding: 10px 16px;
+      font-size: 16px;
       border: none;
+      border-radius: 4px;
       cursor: pointer;
       background: #1976d2;
-      color: #fff;
+      color: white;
     }
-
+    button:hover {
+      background: #0d47a1;
+    }
     .result {
-      margin-top: 16px;
+      margin-top: 20px;
       padding: 12px;
-      border-radius: 10px;
+      border-radius: 6px;
       background: #e3f2fd;
-      font-size: 14px;
-      line-height: 1.5;
-      display: none;
-      text-align: left;
     }
-
-    .result-title {
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .small {
-      font-size: 12px;
-      color: #777;
-      margin-top: 8px;
-      text-align: left;
-    }
-
     .error {
       margin-top: 10px;
-      font-size: 13px;
+      padding: 10px;
+      border-radius: 6px;
+      background: #ffebee;
       color: #c62828;
+    }
+    small {
+      font-size: 12px;
+      color: #555;
     }
   </style>
 </head>
@@ -109,78 +76,162 @@
     <!-- =========== GAMBAR ATAS =========== -->
     <img src="Logo Jata.svg" class="header-image" alt="Atas">
 
-    <h1>Kalkulator Minggu Kehamilan</h1>
-    <div class="subtitle">Berdasarkan tarikh LMP (hari pertama haid terakhir)</div>
-
-    <label for="lmpDate">Tarikh LMP</label>
-    <input type="date" id="lmpDate">
-
-    <button onclick="kiraMinggu()">Kira Minggu Kehamilan</button>
-
-    <div id="error" class="error"></div>
-    <div id="result" class="result"></div>
 
     <!-- =========== GAMBAR BAWAH =========== -->
     <img src="Logo Bawah.svg" class="footer-image" alt="Bawah">
 
-    <div class="small">
-      *Ini hanyalah anggaran umum. Untuk pengesahan umur kehamilan dan EDD,
-      sila rujuk doktor / fasiliti kesihatan.
-    </div>
-
   </div>
 
+  <h1>Kalkulator Minggu Kehamilan</h1>
+
+  <!-- Input tarikh first booking -->
+  <label for="bookingDate">Tarikh First Booking</label>
+  <input type="date" id="bookingDate">
+
+  <!-- Input week of gestation pada tarikh first booking -->
+  <label>Week of Gestation pada Tarikh First Booking</label>
+  <div class="row">
+    <div>
+      <small>Minggu</small>
+      <input type="number" id="bookingWeeks" min="0" max="45" placeholder="cth: 12">
+    </div>
+    <div>
+      <small>Hari (0–6)</small>
+      <input type="number" id="bookingDays" min="0" max="6" placeholder="cth: 3">
+    </div>
+  </div>
+
+  <!-- Tarikh sasaran (default = hari ini) -->
+  <label for="targetDate">
+    Tarikh Sasaran Kiraan 
+    <small>(default: hari ini – boleh kosongkan jika nak guna tarikh semasa)</small>
+  </label>
+  <input type="date" id="targetDate">
+
+  <button id="calculateBtn">Kira Minggu Kehamilan</button>
+
+  <div id="error" class="error" style="display:none;"></div>
+
+  <div id="result" class="result" style="display:none;"></div>
+
   <script>
-    function formatTarikh(date) {
-      const d = date.getDate().toString().padStart(2, '0');
-      const m = (date.getMonth() + 1).toString().padStart(2, '0');
-      const y = date.getFullYear();
-      return `${d}/${m}/${y}`;
+    function parseDateInput(value) {
+      // value format: "YYYY-MM-DD"
+      if (!value) return null;
+      const parts = value.split("-");
+      if (parts.length !== 3) return null;
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // JS month 0–11
+      const day = parseInt(parts[2], 10);
+      return new Date(year, month, day);
     }
 
-    function kiraMinggu() {
-      const lmpInput = document.getElementById('lmpDate').value;
-      const resultEl = document.getElementById('result');
-      const errorEl = document.getElementById('error');
+    function diffInDays(date1, date2) {
+      // Bezakan dalam unit hari, buang masa (jam/minit) supaya tepat
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+      const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+      const diffMs = d2 - d1;
+      return Math.round(diffMs / oneDayMs);
+    }
 
-      errorEl.textContent = "";
-      resultEl.style.display = "none";
-      resultEl.innerHTML = "";
+    document.getElementById("calculateBtn").addEventListener("click", function () {
+      const bookingDateValue = document.getElementById("bookingDate").value;
+      const bookingWeeksValue = document.getElementById("bookingWeeks").value;
+      const bookingDaysValue = document.getElementById("bookingDays").value;
+      const targetDateValue = document.getElementById("targetDate").value;
 
-      if (!lmpInput) {
-        errorEl.textContent = "Sila pilih tarikh LMP terlebih dahulu.";
+      const errorDiv = document.getElementById("error");
+      const resultDiv = document.getElementById("result");
+      errorDiv.style.display = "none";
+      resultDiv.style.display = "none";
+      errorDiv.textContent = "";
+      resultDiv.textContent = "";
+
+      // Validate input asas
+      if (!bookingDateValue) {
+        errorDiv.textContent = "Sila masukkan Tarikh First Booking.";
+        errorDiv.style.display = "block";
         return;
       }
 
-      const lmp = new Date(lmpInput);
-      lmp.setHours(12, 0, 0, 0);
-
-      const today = new Date();
-      today.setHours(12, 0, 0, 0);
-
-      const MS_DAY = 24 * 60 * 60 * 1000;
-      const diffDays = Math.floor((today - lmp) / MS_DAY);
-
-      if (diffDays < 0) {
-        errorEl.textContent = "Tarikh LMP berada pada masa hadapan.";
+      const bookingDate = parseDateInput(bookingDateValue);
+      if (!bookingDate) {
+        errorDiv.textContent = "Tarikh First Booking tidak sah.";
+        errorDiv.style.display = "block";
         return;
       }
 
-      const weeks = Math.floor(diffDays / 7);
-      const days = diffDays % 7;
+      let bookingWeeks = parseInt(bookingWeeksValue || "0", 10);
+      let bookingDays = parseInt(bookingDaysValue || "0", 10);
 
-      const edd = new Date(lmp.getTime() + 280 * MS_DAY);
+      if (isNaN(bookingWeeks) || bookingWeeks < 0) {
+        errorDiv.textContent = "Week of gestation (minggu) pada first booking tidak sah.";
+        errorDiv.style.display = "block";
+        return;
+      }
 
-      resultEl.innerHTML = `
-        <div class="result-title">Keputusan</div>
-        <div><strong>Tarikh hari ini:</strong> ${formatTarikh(today)}</div>
-        <div><strong>Tarikh LMP:</strong> ${formatTarikh(lmp)}</div>
-        <div><strong>Umur kehamilan:</strong> ${weeks} minggu ${days > 0 ? days + " hari" : ""}</div>
-        <div><strong>EDD:</strong> ${formatTarikh(edd)}</div>
+      if (isNaN(bookingDays) || bookingDays < 0 || bookingDays > 6) {
+        errorDiv.textContent = "Hari pada week of gestation perlu antara 0 hingga 6.";
+        errorDiv.style.display = "block";
+        return;
+      }
+
+      // Kalau tarikh sasaran kosong, guna tarikh hari ini (ikut PC/phone)
+      let targetDate;
+      if (targetDateValue) {
+        targetDate = parseDateInput(targetDateValue);
+        if (!targetDate) {
+          errorDiv.textContent = "Tarikh sasaran tidak sah.";
+          errorDiv.style.display = "block";
+          return;
+        }
+      } else {
+        targetDate = new Date(); // hari ini
+      }
+
+      // Semak jika tarikh sasaran sebelum tarikh first booking
+      const daysBetween = diffInDays(bookingDate, targetDate);
+      if (daysBetween < 0) {
+        errorDiv.textContent = "Tarikh sasaran tidak boleh lebih awal daripada tarikh first booking.";
+        errorDiv.style.display = "block";
+        return;
+      }
+
+      // Kira total hari gestation pada first booking
+      const totalDaysAtBooking = bookingWeeks * 7 + bookingDays;
+
+      // Tambah beza hari
+      const totalDaysNow = totalDaysAtBooking + daysBetween;
+
+      // Convert kembali ke minggu + hari
+      const currentWeeks = Math.floor(totalDaysNow / 7);
+      const currentDays = totalDaysNow % 7;
+
+      // Format tarikh untuk paparan
+      function formatDate(d) {
+        const dd = String(d.getDate()).padStart(2, "0");
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const yyyy = d.getFullYear();
+        return dd + "/" + mm + "/" + yyyy;
+      }
+
+      const bookingDateText = formatDate(bookingDate);
+      const targetDateText = formatDate(targetDate);
+
+      resultDiv.innerHTML = `
+        <strong>Keputusan Kiraan:</strong><br><br>
+        Tarikh First Booking: <strong>${bookingDateText}</strong><br>
+        Week of Gestation pada First Booking: <strong>${bookingWeeks} minggu ${bookingDays} hari</strong><br><br>
+        Tarikh Sasaran: <strong>${targetDateText}</strong><br>
+        Week of Gestation pada tarikh ini ialah: <strong>${currentWeeks} minggu ${currentDays} hari</strong><br><br>
+        <small>
+          Kiraan ini berdasarkan formula asas:<br>
+          (Minggu + Hari pada tarikh first booking) + perbezaan hari di antara tarikh sasaran dan tarikh first booking.
+        </small>
       `;
-
-      resultEl.style.display = "block";
-    }
+      resultDiv.style.display = "block";
+    });
   </script>
 
 </body>
