@@ -11,31 +11,45 @@
       margin: 0;
       padding: 16px;
     }
+
     .card {
       max-width: 480px;
       margin: 0 auto;
       background: #ffffff;
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 20px 18px 22px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      text-align: center;
     }
+
+    .header-image,
+    .footer-image {
+      width: 140px;
+      margin: 0 auto 12px auto;
+      display: block;
+    }
+
     h1 {
       font-size: 20px;
       margin: 0 0 4px;
       text-align: center;
     }
+
     .subtitle {
       font-size: 13px;
       color: #666;
       text-align: center;
       margin-bottom: 18px;
     }
+
     label {
       display: block;
       font-size: 14px;
       margin-bottom: 6px;
       font-weight: 600;
+      text-align: left;
     }
+
     input[type="date"] {
       width: 100%;
       padding: 8px 10px;
@@ -44,6 +58,7 @@
       border: 1px solid #ccc;
       box-sizing: border-box;
     }
+
     button {
       width: 100%;
       padding: 10px 12px;
@@ -56,9 +71,7 @@
       background: #1976d2;
       color: #fff;
     }
-    button:active {
-      transform: scale(0.99);
-    }
+
     .result {
       margin-top: 16px;
       padding: 12px;
@@ -66,16 +79,22 @@
       background: #e3f2fd;
       font-size: 14px;
       line-height: 1.5;
+      display: none;
+      text-align: left;
     }
+
     .result-title {
       font-weight: 700;
       margin-bottom: 6px;
     }
+
     .small {
       font-size: 12px;
       color: #777;
       margin-top: 8px;
+      text-align: left;
     }
+
     .error {
       margin-top: 10px;
       font-size: 13px;
@@ -86,6 +105,10 @@
 <body>
 
   <div class="card">
+
+    <!-- =========== GAMBAR ATAS =========== -->
+    <img src="Logo Jata.svg" class="header-image" alt="Atas">
+
     <h1>Kalkulator Minggu Kehamilan</h1>
     <div class="subtitle">Berdasarkan tarikh LMP (hari pertama haid terakhir)</div>
 
@@ -95,12 +118,16 @@
     <button onclick="kiraMinggu()">Kira Minggu Kehamilan</button>
 
     <div id="error" class="error"></div>
-    <div id="result" class="result" style="display:none;"></div>
+    <div id="result" class="result"></div>
+
+    <!-- =========== GAMBAR BAWAH =========== -->
+    <img src="Logo Bawah.svg" class="footer-image" alt="Bawah">
 
     <div class="small">
       *Ini hanyalah anggaran umum. Untuk pengesahan umur kehamilan dan EDD,
       sila rujuk doktor / fasiliti kesihatan.
     </div>
+
   </div>
 
   <script>
@@ -108,13 +135,13 @@
       const d = date.getDate().toString().padStart(2, '0');
       const m = (date.getMonth() + 1).toString().padStart(2, '0');
       const y = date.getFullYear();
-      return d + "/" + m + "/" + y;
+      return `${d}/${m}/${y}`;
     }
 
     function kiraMinggu() {
       const lmpInput = document.getElementById('lmpDate').value;
-      const errorEl = document.getElementById('error');
       const resultEl = document.getElementById('result');
+      const errorEl = document.getElementById('error');
 
       errorEl.textContent = "";
       resultEl.style.display = "none";
@@ -126,44 +153,32 @@
       }
 
       const lmp = new Date(lmpInput);
-      // Pastikan masa set ke tengah hari untuk elak isu time zone pelik
       lmp.setHours(12, 0, 0, 0);
 
       const today = new Date();
       today.setHours(12, 0, 0, 0);
 
-      const MS_PER_DAY = 24 * 60 * 60 * 1000;
-      const diffMs = today - lmp;
-      const diffDays = Math.floor(diffMs / MS_PER_DAY);
+      const MS_DAY = 24 * 60 * 60 * 1000;
+      const diffDays = Math.floor((today - lmp) / MS_DAY);
 
       if (diffDays < 0) {
-        errorEl.textContent = "Tarikh LMP berada pada masa hadapan. Sila semak semula.";
+        errorEl.textContent = "Tarikh LMP berada pada masa hadapan.";
         return;
       }
 
       const weeks = Math.floor(diffDays / 7);
       const days = diffDays % 7;
 
-      // Anggaran EDD = LMP + 280 hari (40 minggu)
-      const eddMs = lmp.getTime() + (280 * MS_PER_DAY);
-      const edd = new Date(eddMs);
-
-      const todayStr = formatTarikh(today);
-      const lmpStr = formatTarikh(lmp);
-      const eddStr = formatTarikh(edd);
-
-      let umurText = weeks + " minggu";
-      if (days > 0) {
-        umurText += " " + days + " hari";
-      }
+      const edd = new Date(lmp.getTime() + 280 * MS_DAY);
 
       resultEl.innerHTML = `
         <div class="result-title">Keputusan</div>
-        <div><strong>Tarikh hari ini:</strong> ${todayStr}</div>
-        <div><strong>Tarikh LMP:</strong> ${lmpStr}</div>
-        <div><strong>Anggaran umur kehamilan:</strong> ${umurText}</div>
-        <div><strong>Anggaran tarikh jangka bersalin (EDD):</strong> ${eddStr}</div>
+        <div><strong>Tarikh hari ini:</strong> ${formatTarikh(today)}</div>
+        <div><strong>Tarikh LMP:</strong> ${formatTarikh(lmp)}</div>
+        <div><strong>Umur kehamilan:</strong> ${weeks} minggu ${days > 0 ? days + " hari" : ""}</div>
+        <div><strong>EDD:</strong> ${formatTarikh(edd)}</div>
       `;
+
       resultEl.style.display = "block";
     }
   </script>
